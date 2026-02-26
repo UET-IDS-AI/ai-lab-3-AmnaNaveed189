@@ -53,7 +53,38 @@ def diabetes_linear_pipeline():
         top_3_feature_indices (list length 3)
     """
 
-    raise NotImplementedError
+    X, y = load_diabetes(return_X_y=True)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+
+    y_train_pred = model.predict(X_train)
+    y_test_pred = model.predict(X_test)
+
+    train_mse = mean_squared_error(y_train, y_train_pred)
+    test_mse = mean_squared_error(y_test, y_test_pred)
+
+    train_r2 = r2_score(y_train, y_train_pred)
+    test_r2 = r2_score(y_test, y_test_pred)
+
+    coef_abs = np.abs(model.coef_)
+    top_3_feature_indices = list(np.argsort(coef_abs)[-3:][::-1])
+
+    return (
+        train_mse,
+        test_mse,
+        train_r2,
+        test_r2,
+        top_3_feature_indices
+    )
 
 
 # =========================================================
@@ -78,7 +109,25 @@ def diabetes_cross_validation():
         std_r2
     """
 
-    raise NotImplementedError
+    X, y = load_diabetes(return_X_y=True)
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    model = LinearRegression()
+
+    scores = cross_val_score(
+        model,
+        X_scaled,
+        y,
+        cv=5,
+        scoring='r2'
+    )
+
+    mean_r2 = scores.mean()
+    std_r2 = scores.std()
+
+    return mean_r2, std_r2
 
 
 # =========================================================
@@ -111,7 +160,39 @@ def cancer_logistic_pipeline():
         f1
     """
 
-    raise NotImplementedError
+    X, y = load_breast_cancer(return_X_y=True)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    model = LogisticRegression(max_iter=5000)
+    model.fit(X_train, y_train)
+
+    y_train_pred = model.predict(X_train)
+    y_test_pred = model.predict(X_test)
+
+    train_accuracy = accuracy_score(y_train, y_train_pred)
+    test_accuracy = accuracy_score(y_test, y_test_pred)
+
+    precision = precision_score(y_test, y_test_pred)
+    recall = recall_score(y_test, y_test_pred)
+    f1 = f1_score(y_test, y_test_pred)
+
+    cm = confusion_matrix(y_test, y_test_pred)
+
+
+    return (
+        train_accuracy,
+        test_accuracy,
+        precision,
+        recall,
+        f1
+    )
 
 
 # =========================================================
@@ -142,7 +223,30 @@ def cancer_logistic_regularization():
         results_dictionary
     """
 
-    raise NotImplementedError
+    X, y = load_breast_cancer(return_X_y=True)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    results = {}
+
+    for C_val in [0.01, 0.1, 1, 10, 100]:
+        model = LogisticRegression(max_iter=5000, C=C_val)
+        model.fit(X_train, y_train)
+
+        train_acc = accuracy_score(y_train, model.predict(X_train))
+        test_acc = accuracy_score(y_test, model.predict(X_test))
+
+        results[C_val] = (train_acc, test_acc)
+
+
+
+    return results
 
 
 # =========================================================
@@ -170,4 +274,27 @@ def cancer_cross_validation():
         std_accuracy
     """
 
-    raise NotImplementedError
+    X, y = load_breast_cancer(return_X_y=True)
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    model = LogisticRegression(C=1, max_iter=5000)
+
+    scores = cross_val_score(
+        model,
+        X_scaled,
+        y,
+        cv=5,
+        scoring='accuracy'
+    )
+
+    mean_accuracy = scores.mean()
+    std_accuracy = scores.std()
+
+
+
+    return mean_accuracy, std_accuracy
+
+
+    return mean_accuracy, std_accuracy
